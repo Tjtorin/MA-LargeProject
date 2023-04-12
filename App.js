@@ -1,12 +1,27 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import 'react-native-url-polyfill/auto';
+
+import HomePage from './components/HomePage';
+import ScanResultsPage from './components/ScanResultsPage';
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Home"
+          component={HomePage}
+        />
+        <Stack.Screen
+          name="Scan Results"
+          component={ScanResultsPage}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

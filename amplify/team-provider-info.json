@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-malargeproject-dev-160826-authRole",
+      "UnauthRoleArn": "arn:aws:iam::240286567532:role/amplify-malargeproject-dev-160826-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::240286567532:role/amplify-malargeproject-dev-160826-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-malargeproject-dev-160826-deployment",
+      "UnauthRoleName": "amplify-malargeproject-dev-160826-unauthRole",
+      "StackName": "amplify-malargeproject-dev-160826",
+      "StackId": "arn:aws:cloudformation:us-east-1:240286567532:stack/amplify-malargeproject-dev-160826/1a4063d0-d3cc-11ed-afdc-12cb2c4c8e21",
+      "AmplifyAppId": "d1wr02n2yig8oz"
+    },
+    "categories": {
+      "auth": {
+        "malargeprojecte0c0dbae": {}
+      }
+    }
+  }
+}

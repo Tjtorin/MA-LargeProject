@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Text, View, StyleSheet, Image, Dimensions, Alert, FlatList } from 'react-native';
+import { Text, View, StyleSheet, Image, Dimensions, Alert, FlatList, Pressable } from 'react-native';
 import { IMAGE_LABELING_API_KEY } from '../hidden/apiKey';
 import {Cloudinary, CloudinaryImage} from '@cloudinary/url-gen'
 import { image } from '@cloudinary/url-gen/qualifiers/source';
@@ -9,6 +9,7 @@ let deviceHeight = Dimensions.get('window').height;
 let deviceWidth = Dimensions.get('window').width;
 
 import ResultItem from './ResultItem';
+import { selectedItem } from './ResultItem';
 
 let resultItemList = [];
 
@@ -16,6 +17,17 @@ let resultItemList = [];
 // cause the api to call again for no reason.
 let previousData = null;
 let loading = true;
+let currentUpdateFunction = null;
+
+let renderInterval = 0;
+export function ReRenderResults() {
+  if (currentUpdateFunction) {
+    currentUpdateFunction(renderInterval);
+    renderInterval++;
+  }
+}
+
+let selectedResultItem = 0;
 
 export default function ScanResultsPage({route, navigation}) {
     let resultsReady = false;
@@ -113,14 +125,34 @@ export default function ScanResultsPage({route, navigation}) {
         i++
       }
 
-      setSelectedId(1);
+      setSelectedId(selectedResultItem);
+    }
+
+    const setSelectedResultItem = (itemId) => {
+      selectedResultItem = itemId;
+      setSelectedId(itemId);
+    }
+
+    const resultButtonStyle = (itemId) => {
+      return selectedResultItem == itemId ? styles.resultButtonSelected : styles.resultButtonNotSelected
     }
 
     const renderItem = ({item}) => (
-      <ResultItem itemName={item.itemName} confidence={item.confidence}/>
+      <Pressable
+        onPress={() => {
+          setSelectedResultItem(item.id)
+        }}
+        style={({pressed}) => [
+          resultButtonStyle(item.id)
+        ]}>
+        {({pressed}) => (
+            <ResultItem itemName={item.itemName} confidence={item.confidence}/>
+        )}
+      </Pressable>
     );
 
     const [selectedId, setSelectedId] = React.useState(); // Using to re-render FlatList
+    currentUpdateFunction = setSelectedId;
     return loading ? (<Text>Loading...</Text>) : (
       <View style={styles.container}>
         <Text style={styles.title}>Object: Confidence %</Text>
@@ -130,6 +162,21 @@ export default function ScanResultsPage({route, navigation}) {
           renderItem={renderItem}
           keyExtractor={item => item.id}
         />
+
+        <Pressable
+          onPress={() => {
+
+          }}
+          style={({pressed}) => [
+            {
+              backgroundColor: pressed ? 'rgb(210, 230, 255)' : 'white',
+            },
+            styles.getDataButton,
+          ]}>
+          {({pressed}) => (
+              <Text>Get Data</Text>
+          )}
+        </Pressable>
       </View>
     );
 }
@@ -150,5 +197,34 @@ const styles = StyleSheet.create({
   image: {
     width: deviceWidth,
     height: deviceHeight
-  }
+  },
+
+  getDataButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    padding: 5,
+    margin: 5,
+    width: deviceWidth / 1.1,
+    borderWidth: 2
+  },
+
+  resultButtonSelected: {
+    alignItems: 'center',
+    borderRadius: 8,
+    padding: 5,
+    margin: 5,
+    width: deviceWidth / 1.1,
+    borderWidth: 2,
+    backgroundColor: 'rgb(210, 230, 255)'
+  },
+
+  resultButtonNotSelected: {
+    alignItems: 'center',
+    borderRadius: 8,
+    padding: 5,
+    margin: 5,
+    width: deviceWidth / 1.1,
+    borderWidth: 2,
+    backgroundColor: 'rgb(255, 255, 255)'
+  },
 });

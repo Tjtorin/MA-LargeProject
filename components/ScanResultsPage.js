@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Text, View, StyleSheet, Image, Dimensions, Alert } from 'react-native';
+import { Text, View, StyleSheet, Image, Dimensions, Alert, FlatList } from 'react-native';
 import { IMAGE_LABELING_API_KEY } from '../hidden/apiKey';
 import {Cloudinary, CloudinaryImage} from '@cloudinary/url-gen'
 import { image } from '@cloudinary/url-gen/qualifiers/source';
@@ -8,21 +8,39 @@ import { image } from '@cloudinary/url-gen/qualifiers/source';
 let deviceHeight = Dimensions.get('window').height;
 let deviceWidth = Dimensions.get('window').width;
 
+import ResultItem from './ResultItem';
+
+let resultItemList = [];
+
+// This is to make sure that when the page reloads from updating it's FlatList, it doesn't
+// cause the api to call again for no reason.
+let previousData = null;
+let loading = true;
+
 export default function ScanResultsPage({route, navigation}) {
-    const cldInstance = new Cloudinary({cloud: {cloudName: 'dwtp2yub2'}});
+    let resultsReady = false;
+    let results;
+
     const data = route.params.data;
     const url = data.uri;
-    console.log("Recieved picture: " + url);
 
-    // // Make sure I don't accidentally spam the api while updating code :)
-    Alert.alert('Confirm', 'Are you sure you want to call the api?', [
-      {
-        text: 'Cancel',
-        onPress: () => console.log('Cancel Pressed'),
-        style: 'cancel',
-      },
-      {text: 'OK', onPress: () => hostImage()},
-    ]); 
+    if (data != previousData) {
+      previousData = data;
+      loading = true;
+      console.log("Received image: " + url);
+
+      // // Make sure I don't accidentally spam the api while updating code :)
+      Alert.alert('Confirm', 'Are you sure you want to call the api?', [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {text: 'OK', onPress: () => hostImage()},
+      ]); 
+    } else {
+      loading = false
+    }
 
     const hostImage = () => {
       const source = data.base64;
@@ -72,20 +90,61 @@ export default function ScanResultsPage({route, navigation}) {
     
       fetch('https://image-labeling1.p.rapidapi.com/img/label', options)
         .then(response => response.json())
-        .then(response => console.log(response))
+        .then(response => {
+          console.log(response);
+          results = response;
+          updateItemList();
+        })
         .catch(err => console.error(err));
     };
 
-    return (
-       <Image style={styles.image} source={{uri: url}}></Image>
+    const updateItemList = () => {
+      console.log("Updating items list")
+      resultItemList = [];
+
+      let i = 0;
+      for (let item in results) {
+        resultItemList.push({
+          itemName: item,
+          confidence: results[item],
+          id: i
+        });
+
+        i++
+      }
+
+      setSelectedId(1);
+    }
+
+    const renderItem = ({item}) => (
+      <ResultItem itemName={item.itemName} confidence={item.confidence}/>
+    );
+
+    const [selectedId, setSelectedId] = React.useState(); // Using to re-render FlatList
+    return loading ? (<Text>Loading...</Text>) : (
+      <View style={styles.container}>
+        <Text style={styles.title}>Object: Confidence %</Text>
+        <FlatList
+          extraData={selectedId}
+          data={resultItemList}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+        />
+      </View>
     );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+
   title: {
     textAlign: 'center',
     fontWeight: 'bold',
-    fontSize: 40,
+    fontSize: 20,
   },
 
   image: {

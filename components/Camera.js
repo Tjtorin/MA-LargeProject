@@ -2,7 +2,7 @@ import * as React from 'react';
 import {View, StyleSheet, Text, Pressable, Dimensions } from 'react-native';
 import { useState } from 'react';
 import {Camera, CameraType} from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 let deviceHeight = Dimensions.get('window').height;
 let deviceWidth = Dimensions.get('window').width;
@@ -14,16 +14,21 @@ export default function Cam() {
     const [type, setType] = useState(CameraType.back);
     const [ready, setReady] = useState(false);
     const [cameraReady, setCameraReady] = useState(false);
+    const isFocused = useIsFocused();
 
-    Camera.getCameraPermissionsAsync().then((permission) => {
-        if (!permission.granted) {
-            console.log("Permission not granted to use camera");
-    
-            return (<Text>Permission not granted to use camera</Text>);
-        } else {
-            setReady(true);
+    React.useEffect(() => {
+        if (isFocused) {
+            Camera.getCameraPermissionsAsync().then((permission) => {
+                if (!permission.granted) {
+                    console.log("Permission not granted to use camera");
+            
+                    return (<Text>Permission not granted to use camera</Text>);
+                } else {
+                    setReady(true);
+                }
+            })
         }
-    })
+    }, [isFocused]);
 
     const toggleCameraType = () => {
         setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
@@ -36,11 +41,7 @@ export default function Cam() {
 
     const takePicture = () => {
         if (cameraReady && camera) {
-            // camera.takePictureAsync().then((picture) => {
-            //     console.log(picture);
-            //     navigation.navigate("Scan Results", {picture: picture});
-            // });
-            const options = {base64: true};
+            const options = {base64: true, quality: 0.2};
             camera.takePictureAsync(options).then((data) => {
                 navigation.navigate("Scan Results", {data: data});
             });

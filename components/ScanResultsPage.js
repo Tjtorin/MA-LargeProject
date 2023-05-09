@@ -2,14 +2,12 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Text, View, StyleSheet, Image, Dimensions, Alert, FlatList, Pressable } from 'react-native';
 import { IMAGE_LABELING_API_KEY } from '../hidden/apiKey';
-import {Cloudinary, CloudinaryImage} from '@cloudinary/url-gen'
-import { image } from '@cloudinary/url-gen/qualifiers/source';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 let deviceHeight = Dimensions.get('window').height;
 let deviceWidth = Dimensions.get('window').width;
 
 import ResultItem from './ResultItem';
-import { selectedItem } from './ResultItem';
 
 let resultItemList = [];
 
@@ -27,9 +25,11 @@ export function ReRenderResults() {
   }
 }
 
-let selectedResultItem = 0;
+let selectedResultItem = -1;
+let selectedResultItemName = "";
 
 export default function ScanResultsPage({route, navigation}) {
+    const nav = useNavigation();
     let resultsReady = false;
     let results;
 
@@ -41,7 +41,7 @@ export default function ScanResultsPage({route, navigation}) {
       loading = true;
       console.log("Received image: " + url);
 
-      // // Make sure I don't accidentally spam the api while updating code :)
+      // Make sure I don't accidentally spam the api while updating code :)
       Alert.alert('Confirm', 'Are you sure you want to call the api?', [
         {
           text: 'Cancel',
@@ -128,8 +128,61 @@ export default function ScanResultsPage({route, navigation}) {
       setSelectedId(selectedResultItem);
     }
 
-    const setSelectedResultItem = (itemId) => {
+    const parseHtml = (html) => {
+      let searchStr = "href="
+      let indexes = [...html.matchAll(new RegExp(searchStr, 'gi'))].map(a => a.index);
+
+      for (let i in indexes) {
+        let insert = "https://en.wikipedia.org";
+        let preInsert = html.slice(0, indexes[i] + (i * insert.length) + 6);
+        let postInsert = html.slice(indexes[i] + (i * insert.length) + 6);
+
+        html = preInsert + insert + postInsert;
+      }
+
+      searchStr = "src="
+      indexes = [...html.matchAll(new RegExp(searchStr, 'gi'))].map(a => a.index);
+
+      for (let i in indexes) {
+        let insert = "https:";
+        let preInsert = html.slice(0, indexes[i] + (i * insert.length) + 5);
+        let postInsert = html.slice(indexes[i] + (i * insert.length) + 5);
+
+        html = preInsert + insert + postInsert;
+      }
+
+      return html;
+    }
+
+    const getHtml = () => {
+      console.log("Calling wiki api");
+      let query = selectedResultItemName.split(" ").join("_");
+      fetch("https://en.wikipedia.org/api/rest_v1/page/mobile-sections/"+query, {
+          method: "GET",
+          headers: {
+              "User-Agent": "torin@eschberger.info"
+          },
+      }).then(async res => {
+          let resData = await res.json();
+          html = resData.lead.sections[0].text;
+          console.log("Parsing html");
+          html = parseHtml(html);
+          nav.navigate("Result Data", {html: html});
+      })
+     }
+
+    const getDataPressed = () => {
+      if (selectedResultItem < 0) {
+        Alert.alert('Select Result', 'You need to select a result to get data from'); 
+        return;
+      }
+
+      getHtml();
+    }
+
+    const setSelectedResultItem = (itemId, itemName) => {
       selectedResultItem = itemId;
+      selectedResultItemName = itemName;
       setSelectedId(itemId);
     }
 
@@ -140,7 +193,7 @@ export default function ScanResultsPage({route, navigation}) {
     const renderItem = ({item}) => (
       <Pressable
         onPress={() => {
-          setSelectedResultItem(item.id)
+          setSelectedResultItem(item.id, item.itemName)
         }}
         style={({pressed}) => [
           resultButtonStyle(item.id)
@@ -164,9 +217,7 @@ export default function ScanResultsPage({route, navigation}) {
         />
 
         <Pressable
-          onPress={() => {
-
-          }}
+          onPress={getDataPressed}
           style={({pressed}) => [
             {
               backgroundColor: pressed ? 'rgb(210, 230, 255)' : 'white',

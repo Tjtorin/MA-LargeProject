@@ -5,6 +5,7 @@ import 'react-native-url-polyfill/auto';
 
 import HomePage from './components/HomePage';
 import ScanResultsPage from './components/ScanResultsPage';
+import ResultDataPage from './components/ResultDataPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,10 @@ export default function App() {
         <Stack.Screen
           name="Scan Results"
           component={ScanResultsPage}
+        />
+        <Stack.Screen
+          name="Result Data"
+          component={ResultDataPage}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -6,10 +6,7 @@ let deviceWidth = Dimensions.get('window').width;
 
 export let selectedItem = null;
 
-const buttonStyle = (itemName) => {
-  return selectedItem == itemName ? styles.buttonSelected : styles.buttonNotSelected;
-}
-
+// This is the object that shows up in the list of items found in an image
 export default function ResultItem({itemName, confidence}) {
   return (
     <Text>{itemName}: {Math.round(((confidence * 100) + Number.EPSILON) * 100) / 100}%</Text>

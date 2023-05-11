@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "doc": "jsdoc -c jsdoc.json"
   },
   "dependencies": {
     "@aws-amplify/api": "^5.0.24",
@@ -27,7 +28,12 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "jsdoc": "^4.0.2",
     "react-native-url-polyfill": "^1.3.0"
   },
-  "private": true
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
